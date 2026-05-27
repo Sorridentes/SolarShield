@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "axios-mock-adapter": "^1.22.0"
+  }
+}
