@@ -1,4 +1,4 @@
-// const { CacheService } = require("../src/ingestor-service/cache");
+const { CacheService } = require("../src/ingestor-service/cache");
 
 class RedisCacheMock {
   constructor() {
