@@ -1,9 +1,12 @@
-const {
-  classifyKp,
-  extractMaxKp,
-} = require("../src/ingestor-service/classify");
+const { Classify } = require("../src/ingestor-service/classify");
 
 describe("RN1 - Classificação de Tempestade Geomagnética por Índice Kp", () => {
+  let classify;
+
+  beforeEach(() => {
+    classify = new Classify();
+  });
+
   describe("Classificação para cada faixa de Kp", () => {
     test.each([
       // [kp, classification, emergencyNotification]
@@ -14,7 +17,7 @@ describe("RN1 - Classificação de Tempestade Geomagnética por Índice Kp", () 
     ])(
       "Kp=%i deve classificar como %s (emergency=%s)",
       (kp, expectedClassification, expectedEmergency) => {
-        const result = classifyKp(kp);
+        const result = classify.classifyKp(kp);
 
         expect(result.classification).toBe(expectedClassification);
         expect(result.emergency_notification).toBe(expectedEmergency);
@@ -34,7 +37,7 @@ describe("RN1 - Classificação de Tempestade Geomagnética por Índice Kp", () 
         ],
       };
 
-      const kp = extractMaxKp(donkiEvent);
+      const kp = classify.extractMaxKp(donkiEvent);
       expect(kp).toBe(6);
     });
 
@@ -48,17 +51,17 @@ describe("RN1 - Classificação de Tempestade Geomagnética por Índice Kp", () 
         ],
       };
 
-      const kp = extractMaxKp(donkiEvent);
+      const kp = classify.extractMaxKp(donkiEvent);
       expect(kp).toBe(8);
     });
   });
 
   describe("Condições de borda", () => {
     test("deve lançar erro para Kp não numérico", () => {
-      expect(classifyKp).toBeDefined();
-      expect(() => classifyKp(null)).toThrow();
-      expect(() => classifyKp(undefined)).toThrow();
-      expect(() => classifyKp("abc")).toThrow();
+      expect(classify.classifyKp).toBeDefined();
+      expect(() => classify.classifyKp(null)).toThrow();
+      expect(() => classify.classifyKp(undefined)).toThrow();
+      expect(() => classify.classifyKp("abc")).toThrow();
     });
   });
 });
