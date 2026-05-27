@@ -5,12 +5,9 @@ class IdempotencyHandler {
   }
 
   async checkAndMark(eventId) {
-    const key = `processed:event:${eventId}`;
+    const key = `idem:notifier:${eventId}`;
     // Operação atômica: SET se não existir, com TTL de 24 horas
     const result = await this.redis.set(key, "processed", "EX", 86400, "NX");
-    logger.debug(
-      `Idempotency check for event ${eventId}: ${result === "OK" ? "first time" : "already processed"}`,
-    );
     return result === "OK";
   }
 

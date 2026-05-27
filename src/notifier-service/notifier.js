@@ -42,20 +42,15 @@ class NotifierService {
           {
             eventId,
             messageId: msg.properties.messageId,
-          },
+          }
         );
         await this.channel.ack(msg);
         return;
       }
 
-      this.logger.info(`[NEW ALERT] Processing event ${eventId}:`, content);
+      this.logger.info(`[NEW ALERT] Processing event ${eventId}: ${content}`);
 
-      // Simular disparo de alerta de emergência
-      if (content.emergency_notification) {
-        this.logger.log(
-          `!!! EMERGENCY NOTIFICATION SENT FOR EVENT ${eventId} !!!`,
-        );
-      }
+      await this.processAlert(eventId, content);
 
       // Confirmar processamento
       await this.channel.ack(msg);
@@ -69,12 +64,20 @@ class NotifierService {
       } catch (extractError) {
         this.logger.error(
           "Failed to extract eventId for cleanup:",
-          extractError,
+          extractError
         );
       }
 
       // Não reencaminhar para evitar loop infinito (vai para DLQ se configurada)
       await this.channel.nack(msg, false, false);
+    }
+  }
+
+  async processAlert(eventId, content) {
+    if (content.emergency_notification) {
+      this.logger.log(
+        `!!! EMERGENCY NOTIFICATION SENT FOR EVENT ${eventId} !!!`
+      );
     }
   }
 }
