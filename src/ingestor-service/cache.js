@@ -1,3 +1,5 @@
+const { Classify } = require("./classify");
+
 class CacheService {
   constructor(redis, fetcher, ttlSeconds = 300) {
     this.redis = redis;
@@ -5,25 +7,52 @@ class CacheService {
     this.ttl = ttlSeconds;
   }
 
-  async getOrFetch(key) {
+  async get(key) {
     try {
       // Tentar obter do cache
       const cached = await this.redis.get(key);
 
-      if (cached) {
-        return {
-          data: JSON.parse(cached),
-          cache: "HIT",
-          headers: { "X-Cache": "HIT" },
-        };
-      }
+      return {
+        data: JSON.parse(cached),
+        cache: "HIT",
+        headers: { "X-Cache": "HIT" },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 
+  async getOrFetch(key) {
+    try {
+      // Tentar obter do cache
+      const cached = await this.get(key);
+
+      if (cached.data) {
+        return cached;
+      }
+      const classify = new Classify();
+
+      return await this.fetch(key, classify);
+    } catch (error) {
+      throw new Error("upstream_unavailable: " + error.message);
+    }
+  }
+
+  async fetch(key, classify) {
+    try {
       // Cache MISS - buscar da fonte
       const freshData = await this.fetcher();
+
+      const latestEvent = freshData[freshData.length - 1];
+      const kp = classify.extractMaxKp(latestEvent);
+      const classification = classify.classifyKp(kp);
+
       const payload = {
-        ...freshData,
+        kp_index: kp,
+        classification: classification.level,
+        emergency_notification: classification.emergency_notification,
         captured_at: new Date().toISOString(),
-        cache: "MISS",
+        source: "NASA DONKI",
       };
 
       // Salvar no cache com TTL
@@ -35,7 +64,7 @@ class CacheService {
         headers: { "X-Cache": "MISS" },
       };
     } catch (error) {
-      throw new Error("upstream_unavailable");
+      throw error;
     }
   }
 }

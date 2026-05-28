@@ -6,10 +6,10 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
-const NASA_API_KEY = process.env.NASA_API_KEY || "DEMO_KEY";
+const PORT = process.env.PORT;
+const REDIS_URL = process.env.REDIS_URL;
+const RABBITMQ_URL = process.env.RABBITMQ_URL;
+const NASA_API_KEY = process.env.NASA_API_KEY;
 
 const redis = new Redis(REDIS_URL);
 
@@ -26,39 +26,29 @@ const { CacheService } = require("./cache");
 
 app.get("/api/space-weather/current", async (req, res) => {
   try {
-    const cached = await redis.get("space-weather:current");
-    if (cached) {
-      return res.json({ ...JSON.parse(cached), cache: "HIT" });
-    }
-
     const nasaClient = new NasaClientWithRetry({
       baseURL: "https://api.nasa.gov",
       timeout: 500,
-      apiKey: "DEMO_KEY",
+      apiKey: NASA_API_KEY,
     });
     const classify = new Classify();
+    const cacheService = new CacheService(
+      redis,
+      async () => {
+        const result = await nasaClient.fetchKpWindow();
+        return result;
+      },
+      300, // TTL 5 minutos
+    );
 
-    const data = await nasaClient.fetchKpWindow();
+    const cache = await cacheService.get("space-weather:current");
 
-    // Simulação de lógica para pegar o mais recente ou processar
-    const kp = classify.extractMaxKp(data);
-    const classification = classify.classifyKp(kp);
+    if (cache.data) {
+      return res.json(cache);
+    }
 
-    const result = {
-      kp_index: kp,
-      classification: classification.level,
-      emergency_notification: classification.emergency,
-      captured_at: new Date().toISOString(),
-      source: "NASA DONKI",
-    };
+    result = await cacheService.fetch("space-weather:current", classify);
 
-    const cacheService = new CacheService(redis, async () => {
-      redis, result, 300;
-    });
-
-    result = await cacheService.getOrFetch("space-weather:current");
-
-    await redis.set("space-weather:current", JSON.stringify(result), "EX", 300); // 5 min TTL
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -68,6 +58,13 @@ app.get("/api/space-weather/current", async (req, res) => {
 app.post("/api/space-weather/ingest", async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
+
+    const nasaClient = new NasaClientWithRetry({
+      baseURL: "https://api.nasa.gov",
+      timeout: 500,
+      apiKey: NASA_API_KEY,
+    });
+    const classify = new Classify();
 
     const data = await nasaClient.fetchKpWindow(startDate, endDate);
     const channel = await getRabbitChannel();
@@ -91,7 +88,7 @@ app.post("/api/space-weather/ingest", async (req, res) => {
         Buffer.from(JSON.stringify(message)),
         {
           headers: { "x-event-id": event.gstID },
-        }
+        },
       );
     }
 
@@ -106,18 +103,26 @@ app.get("/api/neo/feed", async (req, res) => {
   const nasaClient = new NasaClientWithRetry({
     baseURL: "https://api.nasa.gov",
     timeout: 500,
-    apiKey: "DEMO_KEY",
+    apiKey: NASA_API_KEY,
   });
   try {
     const data = await nasaClient.fetchKpWindow(
       (startDate = data),
       (endDate = data),
-      (endpoint = `neo/rest/v1/feed`)
+      (endpoint = `neo/rest/v1/feed`),
     );
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "ingestor",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.listen(PORT, () => console.log(`Ingestor service running on port ${PORT}`));

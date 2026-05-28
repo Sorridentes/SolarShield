@@ -10,14 +10,14 @@ class NasaClientWithRetry {
     startDate = null,
     endDate = null,
     retryCount = 0,
-    endpoint = "DONKI/GST"
+    endpoint = "DONKI/GST",
   ) {
     const maxRetries = 4;
     const delay = 500 * Math.pow(2, retryCount);
 
     try {
       console.log(
-        `[Correlation: ${Date.now()}] Tentativa ${retryCount + 1}/${maxRetries}`
+        `[Correlation: ${Date.now()}] Tentativa ${retryCount + 1}/${maxRetries}`,
       );
 
       const params = { api_key: this.apiKey };
@@ -26,7 +26,7 @@ class NasaClientWithRetry {
 
       const response = await axios.get(`${this.baseURL}/${endpoint}`, {
         params,
-        timeout: this.timeout,
+        timeout: 10000,
       });
 
       return response.data;
@@ -34,7 +34,10 @@ class NasaClientWithRetry {
       const shouldRetry = this.isTransientError(error);
 
       if (shouldRetry && retryCount < maxRetries - 1) {
-        console.log(`Falha transitória, tentando novamente em ${delay}ms`);
+        console.log(
+          `Falha transitória, tentando novamente em ${delay}ms` +
+            ` (Erro: ${error.message})`,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         return this.fetchKpWindow(startDate, endDate, retryCount + 1);
       }

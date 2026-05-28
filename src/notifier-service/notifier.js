@@ -1,7 +1,6 @@
 const { IdempotencyHandler } = require("./idempotency");
 class NotifierService {
   constructor({ redis, channel, logger, idempotencyHandler }) {
-    this.redis = redis;
     this.channel = channel;
     this.logger = logger;
     this.idempotencyHandler =
@@ -42,7 +41,7 @@ class NotifierService {
           {
             eventId,
             messageId: msg.properties.messageId,
-          }
+          },
         );
         await this.channel.ack(msg);
         return;
@@ -64,7 +63,7 @@ class NotifierService {
       } catch (extractError) {
         this.logger.error(
           "Failed to extract eventId for cleanup:",
-          extractError
+          extractError,
         );
       }
 
@@ -76,7 +75,7 @@ class NotifierService {
   async processAlert(eventId, content) {
     if (content.emergency_notification) {
       this.logger.log(
-        `!!! EMERGENCY NOTIFICATION SENT FOR EVENT ${eventId} !!!`
+        `!!! EMERGENCY NOTIFICATION SENT FOR EVENT ${eventId} !!!`,
       );
     }
   }

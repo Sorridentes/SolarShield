@@ -4,19 +4,19 @@ class Classify {
       throw new Error(`Kp = ${kp} inválido`);
     }
 
-    let classification;
+    let level;
     let emergency_notification = false;
 
     if (kp <= 4) {
-      classification = "low";
+      level = "low";
     } else if (kp <= 7.99) {
-      classification = "moderate";
+      level = "moderate";
     } else {
-      classification = "severe";
+      level = "severe";
       emergency_notification = true;
     }
 
-    return { classification, emergency_notification };
+    return { level, emergency_notification };
   }
 
   extractMaxKp(event) {
@@ -25,8 +25,8 @@ class Classify {
     }
 
     if (event.allKpIndex && event.allKpIndex.length > 0) {
-      const kpValues = event.allKpIndex.map((k) => k.kpIndex);
-      return Math.max(...kpValues);
+      const kpValues = Math.max(...event.allKpIndex.map((k) => k.kpIndex));
+      return kpValues;
     }
 
     return 0;
