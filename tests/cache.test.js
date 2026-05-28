@@ -41,7 +41,7 @@ describe("Cache Redis - Cache-Aside Pattern com TTL 5 minutos", () => {
 
   describe("Cache HIT/MISS", () => {
     test("primeira chamada deve ser MISS e buscar da NASA", async () => {
-      const nasaData = { kp_index: 6, classification: "moderate" };
+      const nasaData = [{ kp_index: 6, classification: "moderate" }];
       nasaFetcherMock.mockResolvedValue(nasaData);
 
       const result = await cacheService.getOrFetch("space:current:weather");
@@ -51,7 +51,7 @@ describe("Cache Redis - Cache-Aside Pattern com TTL 5 minutos", () => {
     });
 
     test("segunda chamada dentro do TTL deve ser HIT", async () => {
-      const nasaData = { kp_index: 6, classification: "moderate" };
+      const nasaData = [{ kp_index: 6, classification: "moderate" }];
       nasaFetcherMock.mockResolvedValue(nasaData);
 
       await cacheService.getOrFetch("space:current:weather");
@@ -64,7 +64,7 @@ describe("Cache Redis - Cache-Aside Pattern com TTL 5 minutos", () => {
 
   describe("Headers de cache", () => {
     test("deve retornar header X-Cache: HIT quando acerta cache", async () => {
-      const nasaData = { kp_index: 5, classification: "moderate" };
+      const nasaData = [{ kp_index: 5, classification: "moderate" }];
       nasaFetcherMock.mockResolvedValue(nasaData);
 
       // Primeira chamada (MISS)
@@ -77,7 +77,7 @@ describe("Cache Redis - Cache-Aside Pattern com TTL 5 minutos", () => {
     });
 
     test("deve incluir timestamp no response", async () => {
-      const nasaData = { kp_index: 5, classification: "moderate" };
+      const nasaData = [{ kp_index: 5, classification: "moderate" }];
       nasaFetcherMock.mockResolvedValue(nasaData);
 
       const result = await cacheService.getOrFetch("space:current:weather");
@@ -94,7 +94,7 @@ describe("Cache Redis - Cache-Aside Pattern com TTL 5 minutos", () => {
 
     test("deve salvar no Redis com EX = TTL", async () => {
       const setSpy = jest.spyOn(redisMock, "set");
-      const nasaData = { kp_index: 7, classification: "moderate" };
+      const nasaData = [{ kp_index: 7, classification: "moderate" }];
       nasaFetcherMock.mockResolvedValue(nasaData);
 
       await cacheService.getOrFetch("space:current:weather");

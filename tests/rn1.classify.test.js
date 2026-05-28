@@ -19,7 +19,7 @@ describe("RN1 - Classificação de Tempestade Geomagnética por Índice Kp", () 
       (kp, expectedClassification, expectedEmergency) => {
         const result = classify.classifyKp(kp);
 
-        expect(result.classification).toBe(expectedClassification);
+        expect(result.level).toBe(expectedClassification);
         expect(result.emergency_notification).toBe(expectedEmergency);
       },
     );
