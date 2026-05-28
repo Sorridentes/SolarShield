@@ -1,6 +1,7 @@
 const amqp = require("amqplib");
 const Redis = require("ioredis");
-const logger = require("../core/logging");
+const { logger } = require("./logging");
+const { NotifierService } = require("./notifier");
 require("dotenv").config();
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";

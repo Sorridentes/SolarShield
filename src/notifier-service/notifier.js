@@ -1,4 +1,4 @@
-// notifier.js
+const { IdempotencyHandler } = require("./idempotency");
 class NotifierService {
   constructor({ redis, channel, logger, idempotencyHandler }) {
     this.redis = redis;

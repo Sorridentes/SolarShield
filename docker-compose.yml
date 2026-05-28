@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  ingestor:
+    build: ./src/ingestor-service
+    environment:
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq
+      - NASA_API_KEY=DEMO_KEY
+    depends_on:
+      - redis
+      - rabbitmq
+
+  notifier:
+    build: ./src/notifier-service
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq
+    depends_on:
+      - redis
+      - rabbitmq
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - ingestor
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
