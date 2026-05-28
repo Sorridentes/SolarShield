@@ -7,8 +7,8 @@ class NasaClientWithRetry {
   }
 
   async fetchKpWindow(
-    startDate,
-    endDate,
+    startDate = null,
+    endDate = null,
     retryCount = 0,
     endpoint = "DONKI/GST"
   ) {
